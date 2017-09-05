@@ -27,8 +27,7 @@ class pcap_packet(ctypes.Structure):
     ctypes Structure representation of a packet. The header field is a pointer
     to the header of the savefile the packet came from to provide context. It
     can be accessed with header[0]. By default, the raw packet is stored in
-    a string of hexadecimal-encoded bytes as the packet field. The raw()
-    method will return the raw binary packet.
+    a string of bytes as the packet field..
     """
     _fields_ = [('header', ctypes.POINTER(__pcap_header__)),
                 ('timestamp', ctypes.c_uint),
@@ -48,16 +47,10 @@ class pcap_packet(ctypes.Structure):
         self.packet_len = packet_len
         self.packet = packet
 
-    def raw(self):
-        """
-        Return the raw binary data from the packet.
-        """
-        return binascii.unhexlify(self.packet)
-
     def __repr__(self):
         if isinstance(self.packet, str):
             try:
-                return self.raw()
+                return self.packet
             except TypeError:
                 return str(self.packet)
         else:

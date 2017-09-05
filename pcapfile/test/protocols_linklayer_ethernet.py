@@ -15,6 +15,8 @@ TEST_PACKET = [b'010203040506ffeeddccbbaa08004500003cc43800003806',
                b'0306']
 TEST_PACKET = binascii.unhexlify(b''.join(TEST_PACKET))
 
+def to_frame_addr(s):
+    return binascii.unhexlify(s.replace(':', ''))
 
 class TestCase(unittest.TestCase):
     """
@@ -33,9 +35,9 @@ class TestCase(unittest.TestCase):
         Verify attributes of Ethernet instance.
         """
         frame = ethernet.Ethernet(TEST_PACKET)
-        self.assertEqual(frame.src, b'ff:ee:dd:cc:bb:aa',
+        self.assertEqual(frame.src, to_frame_addr('ff:ee:dd:cc:bb:aa'),
                          'invalid frame source address')
-        self.assertEqual(frame.dst, b'01:02:03:04:05:06',
+        self.assertEqual(frame.dst, to_frame_addr('01:02:03:04:05:06'),
                          'invalid frame destination address')
         self.assertEqual(frame.type, 0x0800, 'invalid frame type')
         self.assertTrue(hasattr(frame, 'load_network'),

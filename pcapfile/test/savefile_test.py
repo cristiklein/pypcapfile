@@ -80,11 +80,11 @@ class TestCase(unittest.TestCase):
 
     def test_packet_valid(self):
         """
-        Make sure raw packets load properly.
+        Make sure packets load properly.
         """
-        packet = self.capfile.packets[0].raw()
+        packet = self.capfile.packets[0].packet
 
-        self.assertEqual(int(bytearray(packet)[14]), 69, 'invalid packet')
+        self.assertEqual(ord(packet[14]), 69, 'invalid packet')
 
         for packet in self.capfile.packets:
             for field in ['capture_len', 'timestamp', 'timestamp_us',

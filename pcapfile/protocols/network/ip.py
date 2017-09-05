@@ -22,10 +22,8 @@ class IP(ctypes.Structure):
                 ('ttl', ctypes.c_ubyte),        # TTL
                 ('p', ctypes.c_ubyte),          # protocol
                 ('sum', ctypes.c_ushort),       # checksum
-                ('src', ctypes.c_char_p),       # source address
-                ('dst', ctypes.c_char_p),       # destination address
-                ('opt', ctypes.c_char_p),       # IP options
-                ('pad', ctypes.c_char_p)]       # padding bytes
+                ('src', ctypes.c_uint32),       # source
+                ('dst', ctypes.c_uint32)]       # destination
 
     def __init__(self, packet, layers=0):
         # parse the required header first, deal with options later
@@ -44,20 +42,20 @@ class IP(ctypes.Structure):
         self.ttl = fields[5]
         self.p = fields[6]
         self.sum = fields[7]
-        self.src = ctypes.c_char_p(parse_ipv4(fields[8]))
-        self.dst = ctypes.c_char_p(parse_ipv4(fields[9]))
+        self.src = fields[8]
+        self.dst = fields[9]
 
         if self.hl > 5:
             payload_start = self.hl * 4
-            self.opt = binascii.hexlify(packet[0x14:payload_start])
-            self.payload = binascii.hexlify(packet[payload_start:])
-            self.opt_parsed = parse_options(binascii.unhexlify(self.opt))
+            self.opt = packet[0x14:payload_start]
+            self.payload = packet[payload_start:]
+            self.opt_parsed = parse_options(self.opt)
         else:
-            self.opt = b'\x00'
-            self.payload = binascii.hexlify(packet[0x14:])
+            self.opt = b''
+            self.payload = packet[0x14:]
             self.opt_parsed = { }
 
-        self.pad = b'\x00'
+        self.pad = b''
 
         if layers:
             self.load_transport(layers)
@@ -67,27 +65,23 @@ class IP(ctypes.Structure):
             ctor = payload_type(self.p)[0]
             if ctor:
                 ctor = ctor
-                payload = binascii.unhexlify(self.payload)
+                payload = self.payload
                 self.payload = ctor(payload, layers - 1)
             else:
                 pass
 
     def __str__(self):
         packet = 'ipv4 packet from %s to %s carrying %d bytes'
-        packet = packet % (self.src, self.dst, (len(self.payload) / 2))
+        packet = packet % (pretty_ip_addr(self.src), pretty_ip_addr(self.dst), len(self.payload))
         return packet
 
-
-def parse_ipv4(address):
-    """
-    Given a raw IPv4 address (i.e. as an unsigned integer), return it in
-    dotted quad notation.
-    """
-    raw = struct.pack('I', address)
-    octets = struct.unpack('BBBB', raw)[::-1]
-    ipv4 = b'.'.join([('%d' % o).encode('ascii') for o in bytearray(octets)])
-    return ipv4
-
+def pretty_ip_addr(addr):
+    return '.'.join([
+        str((addr >> 24) & 0xFF),
+        str((addr >> 16) & 0xFF),
+        str((addr >>  8) & 0xFF),
+        str((addr >>  0) & 0xFF),
+    ])
 
 def strip_ip(packet):
     """
@@ -98,7 +92,7 @@ def strip_ip(packet):
     payload = packet.payload
 
     if type(payload) == '':
-        payload = binascii.unhexlify(payload)
+        payload = payload
     return payload
 
 

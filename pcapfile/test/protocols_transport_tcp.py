@@ -63,11 +63,11 @@ class TestCase(unittest.TestCase):
         self.assertTcp(self.packets[1], syn=True, ack=True, sum=0x18e3)
 
         self.assertTcp(self.packets[3], syn=False, ack=True, psh=True,
-                payload=binascii.hexlify(TEST_PAYLOAD))
+                payload=TEST_PAYLOAD)
 
     def test_payload(self):
         self.assertTcp(self.packets[3], syn=False, ack=True, psh=True,
-                payload=binascii.hexlify(TEST_PAYLOAD))
+                payload=TEST_PAYLOAD)
 
     def test_empty_payload(self):
         self.assertTcp(self.packets[0], payload=b'')
@@ -81,4 +81,4 @@ class TestCase(unittest.TestCase):
             frame = pcap_packet.packet
             packet = frame.payload
             segment = packet.payload
-            self.assertEqual(len(segment), packet.len - len(packet.opt) / 2 - 20)
+            self.assertEqual(len(segment), packet.len - len(packet.opt) - 20)
